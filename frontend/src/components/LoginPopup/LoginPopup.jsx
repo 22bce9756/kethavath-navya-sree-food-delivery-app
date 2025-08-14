@@ -22,32 +22,31 @@ const LoginPopup = ({ setShowLogin }) => {
         setData(data => ({ ...data, [name]: value }))
     }
 
-   const onLogin = async (e) => {
-    e.preventDefault()
+    const onLogin = async (e) => {
+        e.preventDefault()
 
-    let new_url = import.meta.env.VITE_API_BASE;
-    if (currState === "Login") {
-        new_url += "/api/user/login";
-    } else {
-        new_url += "/api/user/register";
-    }
-
-    try {
-        const response = await axios.post(new_url, data);
-        if (response.data.success) {
-            setToken(response.data.token)
-            localStorage.setItem("token", response.data.token)
-            loadCartData({ token: response.data.token })
-            setShowLogin(false)
+        let new_url = import.meta.env.VITE_API_BASE;
+        if (currState === "Login") {
+            new_url += "/api/user/login";
         } else {
-            toast.error(response.data.message)
+            new_url += "/api/user/register";
         }
-    } catch (error) {
-        toast.error("Something went wrong. Please try again.");
-        console.error(error);
-    }
-}
 
+        try {
+            const response = await axios.post(new_url, data);
+            if (response.data.success) {
+                setToken(response.data.token)
+                localStorage.setItem("token", response.data.token)
+                loadCartData({ token: response.data.token })
+                setShowLogin(false)
+            } else {
+                toast.error(response.data.message)
+            }
+        } catch (error) {
+            toast.error("Something went wrong. Please try again.");
+            console.error(error);
+        }
+    }
 
     return (
         <div className='login-popup'>
@@ -65,6 +64,7 @@ const LoginPopup = ({ setShowLogin }) => {
                             type="text"
                             placeholder='Your name'
                             required
+                            autoComplete="name"
                         />
                     }
                     <input
@@ -74,6 +74,7 @@ const LoginPopup = ({ setShowLogin }) => {
                         type="email"
                         placeholder='Your email'
                         required
+                        autoComplete="email"
                     />
                     <input
                         name='password'
@@ -82,6 +83,7 @@ const LoginPopup = ({ setShowLogin }) => {
                         type="password"
                         placeholder='Password'
                         required
+                        autoComplete={currState === "Login" ? "current-password" : "new-password"}
                     />
                 </div>
                 <button>{currState === "Login" ? "Login" : "Create account"}</button>
