@@ -22,31 +22,32 @@ const LoginPopup = ({ setShowLogin }) => {
         setData(data => ({ ...data, [name]: value }))
     }
 
-    const onLogin = async (e) => {
-        e.preventDefault()
+   const onLogin = async (e) => {
+    e.preventDefault()
 
-        let new_url = url;
-        if (currState === "Login") {
-            new_url += "/api/user/login";
-        } else {
-            new_url += "/api/user/register"
-        }
-
-        try {
-            const response = await axios.post(new_url, data);
-            if (response.data.success) {
-                setToken(response.data.token)
-                localStorage.setItem("token", response.data.token)
-                loadCartData({ token: response.data.token })
-                setShowLogin(false)
-            } else {
-                toast.error(response.data.message)
-            }
-        } catch (error) {
-            toast.error("Something went wrong. Please try again.");
-            console.error(error);
-        }
+    let new_url = import.meta.env.VITE_API_BASE;
+    if (currState === "Login") {
+        new_url += "/api/user/login";
+    } else {
+        new_url += "/api/user/register";
     }
+
+    try {
+        const response = await axios.post(new_url, data);
+        if (response.data.success) {
+            setToken(response.data.token)
+            localStorage.setItem("token", response.data.token)
+            loadCartData({ token: response.data.token })
+            setShowLogin(false)
+        } else {
+            toast.error(response.data.message)
+        }
+    } catch (error) {
+        toast.error("Something went wrong. Please try again.");
+        console.error(error);
+    }
+}
+
 
     return (
         <div className='login-popup'>
