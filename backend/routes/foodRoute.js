@@ -1,16 +1,26 @@
 import express from "express";
 import { addFood, listFood, removeFood } from "../controllers/foodController.js";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 import multer from "multer";
-import mongoose from "mongoose";
+import "dotenv/config";
 
 const foodRouter = express.Router();
 
-// Storage engine
-const storage = multer.diskStorage({
-    destination: "uploads",
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}${file.originalname}`);
-    }
+// Cloudinary config
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Multer storage that sends files straight to Cloudinary
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: "food-delivery", // folder name in Cloudinary
+        allowed_formats: ["jpg", "png", "jpeg", "webp"],
+    },
 });
 
 const upload = multer({ storage });
@@ -18,24 +28,9 @@ const upload = multer({ storage });
 // Routes
 foodRouter.get("/list", listFood);
 
+// Upload image → store in Cloudinary → pass URL to controller
 foodRouter.post("/add", upload.single("image"), addFood);
 
 foodRouter.post("/remove", removeFood);
-
-// Serve image by filename from GridFS
-foodRouter.get("/image/:filename", async (req, res) => {
-    try {
-        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-            bucketName: "images"
-        });
-
-        bucket.openDownloadStreamByName(req.params.filename)
-            .pipe(res)
-            .on("error", () => res.status(404).send("Image not found"));
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
-});
-
 
 export default foodRouter;

@@ -1,70 +1,60 @@
 import foodModel from "../models/foodModel.js";
-import mongoose from "mongoose";
+// import cloudinary from "../config/cloudinary.js"; // Uncomment if deleting from Cloudinary
 
-// all food list
+// Get all foods
 const listFood = async (req, res) => {
     try {
-        let foods = await foodModel.find({});
-
-        // Map each food to include the full image URL
-        foods = foods.map(food => ({
-            ...food._doc,
-            image: `${process.env.BASE_URL}/images/${food.image}`
-        }));
-
-        res.json({ success: true, data: foods });
+        const foods = await foodModel.find({});
+        res.json({ success: true, data: foods }); // Cloudinary URLs already full
     } catch (error) {
         console.error(error);
-        res.json({ success: false, message: "Error" });
+        res.status(500).json({ success: false, message: "Error fetching foods" });
     }
 };
 
-// add food
+// Add new food
 const addFood = async (req, res) => {
     try {
         if (!req.file) {
-            return res.json({ success: false, message: "Image is required" });
+            return res.status(400).json({ success: false, message: "Image is required" });
         }
 
-        // Save file to GridFS
-        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-            bucketName: "images"
-        });
-
-        await new Promise((resolve, reject) => {
-            bucket.openUploadStream(req.file.filename)
-                .end(req.file.buffer, (err) => err ? reject(err) : resolve());
-        });
-
-        const food = new foodModel({
+        const food = await foodModel.create({
             name: req.body.name,
             description: req.body.description,
             price: req.body.price,
             category: req.body.category,
-            image: `${process.env.BASE_URL}/api/food/image/${req.file.filename}`
+            image: req.file.path,          // Cloudinary secure URL
+            imagePublicId: req.file.filename // Optional: public_id for deletion
         });
 
-        await food.save();
         res.json({ success: true, message: "Food Added", food });
     } catch (error) {
         console.error(error);
-        res.json({ success: false, message: "Error" });
+        res.status(500).json({ success: false, message: "Error adding food" });
     }
 };
 
-// delete food
+// Remove food
 const removeFood = async (req, res) => {
     try {
         const food = await foodModel.findById(req.body.id);
-        if (!food) return res.json({ success: false, message: "Food not found" });
+        if (!food) {
+            return res.status(404).json({ success: false, message: "Food not found" });
+        }
 
-        // Optionally: also delete from GridFS here
+        // Optional Cloudinary delete
+        /*
+        if (food.imagePublicId) {
+            await cloudinary.uploader.destroy(food.imagePublicId);
+        }
+        */
+
         await foodModel.findByIdAndDelete(req.body.id);
-
         res.json({ success: true, message: "Food Removed" });
     } catch (error) {
         console.error(error);
-        res.json({ success: false, message: "Error" });
+        res.status(500).json({ success: false, message: "Error removing food" });
     }
 };
 

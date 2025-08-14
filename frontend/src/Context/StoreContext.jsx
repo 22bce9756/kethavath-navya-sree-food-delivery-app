@@ -5,7 +5,10 @@ import axios from "axios";
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
-    const url = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+    // Always use HTTPS base URL from env
+    const API_BASE = import.meta.env.VITE_API_BASE || "https://kethavath-navya-sree-food-delivery-app.onrender.com";
+    const IMG_BASE = import.meta.env.VITE_IMG_BASE || API_BASE;
+
     const [foodList, setFoodList] = useState([]);
     const [cartItems, setCartItems] = useState({});
     const [token, setToken] = useState("");
@@ -20,7 +23,7 @@ const StoreContextProvider = (props) => {
 
         if (token) {
             try {
-                await axios.post(`${url}/api/cart/add`, { itemId }, { headers: { token } });
+                await axios.post(`${API_BASE}/api/cart/add`, { itemId }, { headers: { token } });
             } catch (error) {
                 console.error("Error adding to cart:", error);
             }
@@ -35,7 +38,7 @@ const StoreContextProvider = (props) => {
 
         if (token) {
             try {
-                await axios.post(`${url}/api/cart/remove`, { itemId }, { headers: { token } });
+                await axios.post(`${API_BASE}/api/cart/remove`, { itemId }, { headers: { token } });
             } catch (error) {
                 console.error("Error removing from cart:", error);
             }
@@ -57,7 +60,7 @@ const StoreContextProvider = (props) => {
 
     const fetchFoodList = async () => {
         try {
-            const response = await axios.get(`${url}/api/food/list`);
+            const response = await axios.get(`${API_BASE}/api/food/list`);
             setFoodList(response.data.data);
         } catch (error) {
             console.error("Error fetching food list:", error);
@@ -67,7 +70,7 @@ const StoreContextProvider = (props) => {
 
     const loadCartData = async (token) => {
         try {
-            const response = await axios.post(`${url}/api/cart/get`, {}, { headers: { token } });
+            const response = await axios.post(`${API_BASE}/api/cart/get`, {}, { headers: { token } });
             setCartItems(response.data.cartData);
         } catch (error) {
             console.error("Error loading cart data:", error);
@@ -87,7 +90,8 @@ const StoreContextProvider = (props) => {
     }, []);
 
     const contextValue = {
-        url,
+        API_BASE,
+        IMG_BASE,
         food_list: foodList,
         menu_list,
         cartItems,
