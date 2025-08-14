@@ -1,21 +1,41 @@
-import express from 'express';
-import { addFood, listFood, removeFood } from '../controllers/foodController.js';
-import multer from 'multer';
+import express from "express";
+import { addFood, listFood, removeFood } from "../controllers/foodController.js";
+import multer from "multer";
+import mongoose from "mongoose";
+
 const foodRouter = express.Router();
 
-//Image Storage Engine (Saving Image to uploads folder & rename it)
-
+// Storage engine
 const storage = multer.diskStorage({
-    destination: 'uploads',
+    destination: "uploads",
     filename: (req, file, cb) => {
-        return cb(null,`${Date.now()}${file.originalname}`);
+        cb(null, `${Date.now()}${file.originalname}`);
     }
-})
+});
 
-const upload = multer({ storage: storage})
+const upload = multer({ storage });
 
-foodRouter.get("/list",listFood);
-foodRouter.post("/add",upload.single('image'),addFood);
-foodRouter.post("/remove",removeFood);
+// Routes
+foodRouter.get("/list", listFood);
+
+foodRouter.post("/add", upload.single("image"), addFood);
+
+foodRouter.post("/remove", removeFood);
+
+// Serve image by filename from GridFS
+foodRouter.get("/image/:filename", async (req, res) => {
+    try {
+        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+            bucketName: "images"
+        });
+
+        bucket.openDownloadStreamByName(req.params.filename)
+            .pipe(res)
+            .on("error", () => res.status(404).send("Image not found"));
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 
 export default foodRouter;
