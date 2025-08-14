@@ -5,17 +5,25 @@ import { StoreContext } from '../../Context/StoreContext';
 
 const FoodItem = ({ image, name, price, desc, id }) => {
     const [itemCount, setItemCount] = useState(0);
-    const { cartItems, addToCart, removeFromCart, url, currency } = useContext(StoreContext);
+    const { cartItems, addToCart, removeFromCart, currency } = useContext(StoreContext);
 
-    // Handle the case where cartItems might be undefined
+    // Get quantity from cart or default to 0
     const quantity = cartItems?.[id] || 0;
+
+    // Backend base URL from .env
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+    // Compute the final image URL
+    const imageUrl = image?.startsWith('http')
+        ? image // Already a full URL (e.g., Cloudinary)
+        : `${apiBaseUrl}/images/${image}`; // Local backend image
 
     return (
         <div className='food-item'>
             <div className='food-item-img-container'>
                 <img
                     className='food-item-image'
-                    src={`${url}/images/${image}`}
+                    src={imageUrl}
                     alt={name}
                 />
 
@@ -49,7 +57,9 @@ const FoodItem = ({ image, name, price, desc, id }) => {
                     <img src={assets.rating_starts} alt='Rating stars' />
                 </div>
                 <p className='food-item-desc'>{desc}</p>
-                <p className='food-item-price'>{currency}{price}</p>
+                <p className='food-item-price'>
+                    {currency}{price}
+                </p>
             </div>
         </div>
     );

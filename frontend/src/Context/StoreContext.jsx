@@ -5,7 +5,7 @@ import axios from "axios";
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
-    const url = "http://localhost:4000";
+    const url = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
     const [foodList, setFoodList] = useState([]);
     const [cartItems, setCartItems] = useState({});
     const [token, setToken] = useState("");
@@ -13,40 +13,42 @@ const StoreContextProvider = (props) => {
     const deliveryCharge = 50;
 
     const addToCart = async (itemId) => {
-        setCartItems((prev) => {
-            // Create a new object to avoid direct state mutation
-            const newCartItems = { ...prev };
-            // Initialize the item count to 0 if it doesn't exist, then increment
-            newCartItems[itemId] = (newCartItems[itemId] || 0) + 1;
-            return newCartItems;
-        });
+        setCartItems((prev) => ({
+            ...prev,
+            [itemId]: (prev[itemId] || 0) + 1
+        }));
 
         if (token) {
-            await axios.post(url + "/api/cart/add", { itemId }, { headers: { token } });
+            try {
+                await axios.post(`${url}/api/cart/add`, { itemId }, { headers: { token } });
+            } catch (error) {
+                console.error("Error adding to cart:", error);
+            }
         }
     };
 
     const removeFromCart = async (itemId) => {
-        setCartItems((prev) => {
-            // Create a new object to avoid direct state mutation
-            const newCartItems = { ...prev };
-            // Decrement the item count, ensuring it doesn't go below 0
-            newCartItems[itemId] = Math.max((newCartItems[itemId] || 0) - 1, 0);
-            return newCartItems;
-        });
+        setCartItems((prev) => ({
+            ...prev,
+            [itemId]: Math.max((prev[itemId] || 0) - 1, 0)
+        }));
 
         if (token) {
-            await axios.post(url + "/api/cart/remove", { itemId }, { headers: { token } });
+            try {
+                await axios.post(`${url}/api/cart/remove`, { itemId }, { headers: { token } });
+            } catch (error) {
+                console.error("Error removing from cart:", error);
+            }
         }
     };
 
     const getTotalCartAmount = () => {
         let totalAmount = 0;
-        for (const item in cartItems) {
-            if (cartItems[item] > 0) {
-                let itemInfo = foodList.find((product) => product._id === item);
+        for (const itemId in cartItems) {
+            if (cartItems[itemId] > 0) {
+                const itemInfo = foodList.find((product) => product._id === itemId);
                 if (itemInfo) {
-                    totalAmount += itemInfo.price * cartItems[item];
+                    totalAmount += itemInfo.price * cartItems[itemId];
                 }
             }
         }
@@ -55,19 +57,17 @@ const StoreContextProvider = (props) => {
 
     const fetchFoodList = async () => {
         try {
-            const response = await axios.get(url + "/api/food/list");
+            const response = await axios.get(`${url}/api/food/list`);
             setFoodList(response.data.data);
         } catch (error) {
             console.error("Error fetching food list:", error);
-            // Fallback to static list if API fails
-            setFoodList(foodListStatic);
+            setFoodList(foodListStatic); // fallback to static list
         }
     };
 
-    // Corrected loadCartData to accept token string and set headers correctly
     const loadCartData = async (token) => {
         try {
-            const response = await axios.post(url + "/api/cart/get", {}, { headers: { token: token } });
+            const response = await axios.post(`${url}/api/cart/get`, {}, { headers: { token } });
             setCartItems(response.data.cartData);
         } catch (error) {
             console.error("Error loading cart data:", error);
@@ -77,10 +77,9 @@ const StoreContextProvider = (props) => {
     useEffect(() => {
         async function loadData() {
             await fetchFoodList();
-            if (localStorage.getItem("token")) {
-                const savedToken = localStorage.getItem("token");
+            const savedToken = localStorage.getItem("token");
+            if (savedToken) {
                 setToken(savedToken);
-                // Pass the savedToken string directly to the corrected loadCartData function
                 await loadCartData(savedToken);
             }
         }
@@ -97,7 +96,7 @@ const StoreContextProvider = (props) => {
         getTotalCartAmount,
         token,
         setToken,
-        loadCartData, // Now expects a token string
+        loadCartData,
         setCartItems,
         currency,
         deliveryCharge
