@@ -5,105 +5,53 @@ import axios from "axios";
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
-    // Always use HTTPS base URL from env
-    const API_BASE = import.meta.env.VITE_API_BASE || "https://kethavath-navya-sree-food-delivery-app.onrender.com";
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://kethavath-navya-sree-food-delivery-app.onrender.com";
     const IMG_BASE = import.meta.env.VITE_IMG_BASE || API_BASE;
 
+    axios.defaults.withCredentials = true; // ✅ send cookies automatically
+
     const [foodList, setFoodList] = useState([]);
-    const [cartItems, setCartItems] = useState({}); // always object
-    const [token, setToken] = useState("");
-    const currency = "₹";
-    const deliveryCharge = 50;
+    const [cartItems, setCartItems] = useState({});
+    const currency = "$";
+    const deliveryCharge = 25;
 
     const addToCart = async (itemId) => {
-        setCartItems((prev) => ({
-            ...prev,
-            [itemId]: (prev?.[itemId] || 0) + 1
-        }));
-
-        if (token) {
-            try {
-                await axios.post(`${API_BASE}/api/cart/add`, { itemId }, { headers: { token } });
-            } catch (error) {
-                console.error("Error adding to cart:", error);
-            }
-        }
+        setCartItems((prev) => ({ ...prev, [itemId]: (prev[itemId] || 0) + 1 }));
+        await axios.post(`${API_BASE}/api/cart/add`, { itemId });
     };
 
     const removeFromCart = async (itemId) => {
-        setCartItems((prev) => ({
-            ...prev,
-            [itemId]: Math.max((prev?.[itemId] || 0) - 1, 0)
-        }));
-
-        if (token) {
-            try {
-                await axios.post(`${API_BASE}/api/cart/remove`, { itemId }, { headers: { token } });
-            } catch (error) {
-                console.error("Error removing from cart:", error);
-            }
-        }
-    };
-
-    const getTotalCartAmount = () => {
-        let totalAmount = 0;
-        for (const itemId in cartItems) {
-            if (cartItems[itemId] > 0) {
-                const itemInfo = foodList.find((product) => product._id === itemId);
-                if (itemInfo) {
-                    totalAmount += itemInfo.price * cartItems[itemId];
-                }
-            }
-        }
-        return totalAmount;
+        setCartItems((prev) => ({ ...prev, [itemId]: Math.max((prev[itemId] || 0) - 1, 0) }));
+        await axios.post(`${API_BASE}/api/cart/remove`, { itemId });
     };
 
     const fetchFoodList = async () => {
         try {
-            const response = await axios.get(`${API_BASE}/api/food/list`);
-            setFoodList(response.data.data);
-        } catch (error) {
-            console.error("Error fetching food list:", error);
-            setFoodList(foodListStatic); // fallback to static list
+            const res = await axios.get(`${API_BASE}/api/food/list`);
+            setFoodList(res.data.data);
+        } catch {
+            setFoodList(foodListStatic);
         }
     };
 
-    const loadCartData = async (token) => {
-        try {
-            const response = await axios.post(`${API_BASE}/api/cart/get`, {}, { headers: { token } });
-            setCartItems(response.data.cartData || {});
-        } catch (error) {
-            console.error("Error loading cart data:", error);
-            setCartItems({});
-        }
+    const loadCartData = async () => {
+        const res = await axios.post(`${API_BASE}/api/cart/get`);
+        setCartItems(res.data.cartData || {});
     };
 
     useEffect(() => {
-        async function loadData() {
-            await fetchFoodList();
-            const savedToken = localStorage.getItem("token");
-            if (savedToken) {
-                setToken(savedToken);
-                await loadCartData(savedToken);
-            }
-        }
-        loadData();
+        fetchFoodList();
+        loadCartData();
     }, []);
 
     const contextValue = {
         API_BASE,
         IMG_BASE,
-        url: API_BASE, // ✅ Added for compatibility with PlaceOrder.jsx & MyOrders.jsx
         food_list: foodList,
         menu_list,
         cartItems,
         addToCart,
         removeFromCart,
-        getTotalCartAmount,
-        token,
-        setToken,
-        loadCartData,
-        setCartItems,
         currency,
         deliveryCharge
     };
