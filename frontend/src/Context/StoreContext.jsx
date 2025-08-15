@@ -10,7 +10,7 @@ const StoreContextProvider = (props) => {
     const IMG_BASE = import.meta.env.VITE_IMG_BASE || API_BASE;
 
     const [foodList, setFoodList] = useState([]);
-    const [cartItems, setCartItems] = useState({});
+    const [cartItems, setCartItems] = useState({}); // always object
     const [token, setToken] = useState("");
     const currency = "₹";
     const deliveryCharge = 50;
@@ -18,7 +18,7 @@ const StoreContextProvider = (props) => {
     const addToCart = async (itemId) => {
         setCartItems((prev) => ({
             ...prev,
-            [itemId]: (prev[itemId] || 0) + 1
+            [itemId]: (prev?.[itemId] || 0) + 1
         }));
 
         if (token) {
@@ -33,7 +33,7 @@ const StoreContextProvider = (props) => {
     const removeFromCart = async (itemId) => {
         setCartItems((prev) => ({
             ...prev,
-            [itemId]: Math.max((prev[itemId] || 0) - 1, 0)
+            [itemId]: Math.max((prev?.[itemId] || 0) - 1, 0)
         }));
 
         if (token) {
@@ -71,9 +71,10 @@ const StoreContextProvider = (props) => {
     const loadCartData = async (token) => {
         try {
             const response = await axios.post(`${API_BASE}/api/cart/get`, {}, { headers: { token } });
-            setCartItems(response.data.cartData);
+            setCartItems(response.data.cartData || {});
         } catch (error) {
             console.error("Error loading cart data:", error);
+            setCartItems({});
         }
     };
 
@@ -92,6 +93,7 @@ const StoreContextProvider = (props) => {
     const contextValue = {
         API_BASE,
         IMG_BASE,
+        url: API_BASE, // ✅ Added for compatibility with PlaceOrder.jsx & MyOrders.jsx
         food_list: foodList,
         menu_list,
         cartItems,
