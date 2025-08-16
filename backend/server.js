@@ -19,8 +19,9 @@ const port = process.env.PORT || 4000;
 // Allowed origins
 const allowedOrigins = [
   "http://localhost:5173", // Local frontend
-  "https://kethavath-navya-sree-food-delivery-app.onrender.com", // Deployed frontend
+  "https://kethavath-navya-sree-food-delivery-app-1.onrender.com", // Correct deployed frontend
 ];
+
 
 // CORS options with dynamic check
 const corsOptions = {
