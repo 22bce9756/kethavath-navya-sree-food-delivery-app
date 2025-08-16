@@ -5,53 +5,100 @@ import axios from "axios";
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
-    const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://kethavath-navya-sree-food-delivery-app.onrender.com";
-    const IMG_BASE = import.meta.env.VITE_IMG_BASE || API_BASE;
-
-    axios.defaults.withCredentials = true; // ✅ send cookies automatically
-
+    const url = "http://localhost:4000";
     const [foodList, setFoodList] = useState([]);
     const [cartItems, setCartItems] = useState({});
-    const currency = "$";
-    const deliveryCharge = 25;
+    const [token, setToken] = useState("");
+    const currency = "₹";
+    const deliveryCharge = 50;
 
     const addToCart = async (itemId) => {
-        setCartItems((prev) => ({ ...prev, [itemId]: (prev[itemId] || 0) + 1 }));
-        await axios.post(`${API_BASE}/api/cart/add`, { itemId });
+        setCartItems((prev) => {
+            // Create a new object to avoid direct state mutation
+            const newCartItems = { ...prev };
+            // Initialize the item count to 0 if it doesn't exist, then increment
+            newCartItems[itemId] = (newCartItems[itemId] || 0) + 1;
+            return newCartItems;
+        });
+
+        if (token) {
+            await axios.post(url + "/api/cart/add", { itemId }, { headers: { token } });
+        }
     };
 
     const removeFromCart = async (itemId) => {
-        setCartItems((prev) => ({ ...prev, [itemId]: Math.max((prev[itemId] || 0) - 1, 0) }));
-        await axios.post(`${API_BASE}/api/cart/remove`, { itemId });
+        setCartItems((prev) => {
+            // Create a new object to avoid direct state mutation
+            const newCartItems = { ...prev };
+            // Decrement the item count, ensuring it doesn't go below 0
+            newCartItems[itemId] = Math.max((newCartItems[itemId] || 0) - 1, 0);
+            return newCartItems;
+        });
+
+        if (token) {
+            await axios.post(url + "/api/cart/remove", { itemId }, { headers: { token } });
+        }
+    };
+
+    const getTotalCartAmount = () => {
+        let totalAmount = 0;
+        for (const item in cartItems) {
+            if (cartItems[item] > 0) {
+                let itemInfo = foodList.find((product) => product._id === item);
+                if (itemInfo) {
+                    totalAmount += itemInfo.price * cartItems[item];
+                }
+            }
+        }
+        return totalAmount;
     };
 
     const fetchFoodList = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/api/food/list`);
-            setFoodList(res.data.data);
-        } catch {
+            const response = await axios.get(url + "/api/food/list");
+            setFoodList(response.data.data);
+        } catch (error) {
+            console.error("Error fetching food list:", error);
+            // Fallback to static list if API fails
             setFoodList(foodListStatic);
         }
     };
 
-    const loadCartData = async () => {
-        const res = await axios.post(`${API_BASE}/api/cart/get`);
-        setCartItems(res.data.cartData || {});
+    // Corrected loadCartData to accept token string and set headers correctly
+    const loadCartData = async (token) => {
+        try {
+            const response = await axios.post(url + "/api/cart/get", {}, { headers: { token: token } });
+            setCartItems(response.data.cartData);
+        } catch (error) {
+            console.error("Error loading cart data:", error);
+        }
     };
 
     useEffect(() => {
-        fetchFoodList();
-        loadCartData();
+        async function loadData() {
+            await fetchFoodList();
+            if (localStorage.getItem("token")) {
+                const savedToken = localStorage.getItem("token");
+                setToken(savedToken);
+                // Pass the savedToken string directly to the corrected loadCartData function
+                await loadCartData(savedToken);
+            }
+        }
+        loadData();
     }, []);
 
     const contextValue = {
-        API_BASE,
-        IMG_BASE,
+        url,
         food_list: foodList,
         menu_list,
         cartItems,
         addToCart,
         removeFromCart,
+        getTotalCartAmount,
+        token,
+        setToken,
+        loadCartData, // Now expects a token string
+        setCartItems,
         currency,
         deliveryCharge
     };

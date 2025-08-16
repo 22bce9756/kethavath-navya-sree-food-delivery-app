@@ -28,7 +28,7 @@ const Navbar = ({ setShowLogin }) => {
 
   return (
     <div className='navbar'>
-      <Link to='/'><img className='logo' src={assets.logo} alt="" /></Link>
+      <Link to='/'><img className='logo' src={assets.logo} alt="Food Delivery Logo" /></Link>
       <ul className="navbar-menu">
         <Link to="/" onClick={() => setMenu("home")} className={`${menu === "home" ? "active" : ""}`}>home</Link>
         <a href='#explore-menu' onClick={() => setMenu("menu")} className={`${menu === "menu" ? "active" : ""}`}>menu</a>
@@ -40,7 +40,7 @@ const Navbar = ({ setShowLogin }) => {
         {/* Search icon toggle */}
         <img
           src={assets.search_icon}
-          alt=""
+          alt="Search Icon"
           style={{ cursor: 'pointer' }}
           onClick={() => setShowSearchBar(!showSearchBar)}
         />
@@ -48,9 +48,12 @@ const Navbar = ({ setShowLogin }) => {
         {/* Search input box */}
         {showSearchBar && (
           <input
+            id="navbar-search"
+            name="search"
             type="text"
             placeholder="Search..."
             value={searchQuery}
+            autoComplete="off"
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             style={{
@@ -63,7 +66,7 @@ const Navbar = ({ setShowLogin }) => {
         )}
 
         <Link to='/cart' className='navbar-search-icon'>
-          <img src={assets.basket_icon} alt="" />
+          <img src={assets.basket_icon} alt="Cart" />
           <div className={getTotalCartAmount() > 0 ? "dot" : ""}></div>
         </Link>
 
@@ -71,14 +74,14 @@ const Navbar = ({ setShowLogin }) => {
           <button onClick={() => setShowLogin(true)}>sign in</button>
         ) : (
           <div className='navbar-profile'>
-            <img src={assets.profile_icon} alt="" />
+            <img src={assets.profile_icon} alt="Profile" />
             <ul className='navbar-profile-dropdown'>
               <li onClick={() => navigate('/myorders')}>
-                <img src={assets.bag_icon} alt="" /> <p>Orders</p>
+                <img src={assets.bag_icon} alt="Orders" /> <p>Orders</p>
               </li>
               <hr />
               <li onClick={logout}>
-                <img src={assets.logout_icon} alt="" /> <p>Logout</p>
+                <img src={assets.logout_icon} alt="Logout" /> <p>Logout</p>
               </li>
             </ul>
           </div>
