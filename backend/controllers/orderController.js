@@ -8,7 +8,7 @@ dotenv.config(); // ✅ Load environment variables
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // sk_test_...
 
 //config variables
-const currency = "usd";
+const currency = "inr";
 const deliveryCharge = 57;
 const frontend_URL = process.env.FRONTEND_URL;
 
