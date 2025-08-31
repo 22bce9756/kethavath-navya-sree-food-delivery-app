@@ -8,7 +8,8 @@ const Footer = () => {
       <div className="footer-content">
         <div className="footer-content-left">
             <img src={assets.logo} alt="" />
-            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+            <p>Tomato is your go-to delivery partner for fresh meals, groceries, and everyday essentials. Whether you're craving comfort food or need a quick restock, we bring speed, reliability, and a touch of flavor to every doorstep. Powered by smart logistics and a user-friendly experience, Tomato makes sure your order arrives just the way you want it—fast, fresh, and hassle-free.
+</p>
             <div className="footer-social-icons">
                 <img src={assets.facebook_icon} alt="" />
                 <img src={assets.twitter_icon} alt="" />
@@ -33,7 +34,7 @@ const Footer = () => {
         </div>
       </div>
       <hr />
-      <p className="footer-copyright">Copyright 2024 © Tomato.com - All Right Reserved.</p>
+      <p className="footer-copyright">Copyright 2025 © Tomato.com - All Right Reserved.</p>
     </div>
   )
 }
