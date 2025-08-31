@@ -7,12 +7,12 @@ dotenv.config(); // ✅ Load environment variables
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // sk_test_...
 
-//config variables
+// Config variables
 const currency = "inr";
 const deliveryCharge = 57;
-const frontend_URL = 'http://localhost:5173';
+const frontend_URL = process.env.frontend_URL;
 
-// Placing User Order for Frontend using stripe
+// Placing User Order for Frontend using Stripe
 const placeOrder = async (req, res) => {
     try {
         const newOrder = new orderModel({
@@ -45,6 +45,9 @@ const placeOrder = async (req, res) => {
             },
             quantity: 1,
         });
+
+        // ✅ Log the frontend URL to confirm it's correct
+        console.log("Using frontend_URL:", frontend_URL);
 
         const session = await stripe.checkout.sessions.create({
             success_url: `${frontend_URL}/verify?success=true&orderId=${newOrder._id}`,
@@ -102,6 +105,7 @@ const userOrders = async (req, res) => {
     }
 };
 
+// Updating Order Status
 const updateStatus = async (req, res) => {
     console.log(req.body);
     try {
@@ -112,6 +116,7 @@ const updateStatus = async (req, res) => {
     }
 };
 
+// Verifying Stripe Payment
 const verifyOrder = async (req, res) => {
     const { orderId, success } = req.body;
     try {
